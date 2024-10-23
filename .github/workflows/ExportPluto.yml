@@ -1,0 +1,54 @@
+name: Export Pluto notebooks
+on:
+    workflow_dispatch:
+
+env:
+  SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+  PYTHON:
+
+jobs:
+    build-and-deploy:
+        timeout-minutes: 30
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v2
+
+            - name: Install Julia
+              uses: julia-actions/setup-julia@v2
+              with:
+                  version: 1
+
+            - run: sudo apt-get update && sudo apt-get install -y xorg-dev mesa-utils xvfb libgl1 freeglut3-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev xsettingsd x11-xserver-utils
+
+            - run: |
+                  mkdir -p ~/.ssh
+                  ssh-keyscan github.com >> ~/.ssh/known_hosts
+                  ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+                  ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
+            - run: julia -e 'using Pkg; pkg"registry add General git@github.com:aplavin/MyRegistry.git"'
+
+            - name: Run & export Pluto notebooks
+              run: |
+                DISPLAY=:0 xvfb-run -s '-screen 0 1024x768x24' julia -e 'using Pkg
+                  Pkg.activate(mktempdir())
+                  Pkg.add([
+                    Pkg.PackageSpec(name="PlutoSliderServer", version="0.3.2-0.3"),
+                    Pkg.PackageSpec(name="MsgPack"),
+                  ])
+
+                  import PlutoSliderServer
+
+                  PlutoSliderServer.github_action(".";
+                    Export_cache_dir="pluto_state_cache",
+                    Export_baked_notebookfile=false,
+                    Export_baked_state=false,
+                    # more parameters can go here
+                  )'
+
+            - name: Deploy to gh-pages
+              uses: JamesIves/github-pages-deploy-action@releases/v3
+              with:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  BRANCH: gh-pages
+                  FOLDER: .
