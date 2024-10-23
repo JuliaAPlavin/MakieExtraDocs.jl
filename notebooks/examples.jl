@@ -450,6 +450,46 @@ let
 	end
 end
 
+# ╔═╡ 76a03ce9-01a6-427b-a245-1a66806469f1
+md"""
+## Generate the full `Observable` trajectory
+
+Suppose one has an animation – like in this example, with the point moving along the parabola:
+"""
+
+# ╔═╡ 13bfc2d9-e4bc-4aef-a343-29861f59c72d
+let
+	xvals = range(-1,1,length=100)
+	x = Observable(0.)
+	xy = @lift ($x, $x^2)
+	scatter(xy, markersize=20)
+
+	Record(current_figure(), xvals) do x_
+		x[] = x_
+	end
+end
+
+# ╔═╡ db73e601-3432-491a-bdeb-6951d5bd4091
+md"""
+The trajectory of this point is not immediately obvious, we can only see its position in each moment in time.
+
+What if we want to plot the full trajectory as well?\
+It's trivial with the `obsmap(x, xvals, out)` function that generates the trajectory of the `out::Observable` when the `x::Observable` value iterates over `xvals`:
+"""
+
+# ╔═╡ d98f49ed-2a6c-46ce-8a14-77c1834c3510
+let
+	xvals = range(-1,1,length=100)
+	x = Observable(0.)
+	xy = @lift ($x, $x^2)
+	scatter(xy, markersize=20)
+	lines!(obsmap(x, xvals, xy))  # the only new line
+
+	Record(current_figure(), xvals) do x_
+		x[] = x_
+	end
+end
+
 # ╔═╡ c7545664-2132-4e4d-9091-0eaf71fea19d
 md"""
 ## Rich text manipulation
@@ -2523,6 +2563,10 @@ version = "1.4.1+1"
 # ╠═55be0296-4cc2-47f1-9578-866e4cdd2edd
 # ╟─b35e98bd-8ef8-4ba2-aae8-e4d85aa8214c
 # ╠═bc22e2e0-df92-4beb-b98a-aa4bfa4b04ac
+# ╟─76a03ce9-01a6-427b-a245-1a66806469f1
+# ╠═13bfc2d9-e4bc-4aef-a343-29861f59c72d
+# ╟─db73e601-3432-491a-bdeb-6951d5bd4091
+# ╠═d98f49ed-2a6c-46ce-8a14-77c1834c3510
 # ╟─c7545664-2132-4e4d-9091-0eaf71fea19d
 # ╠═c1f31438-4da1-43dd-b418-fcb3dfa8a156
 # ╟─bb711dab-bb26-4a76-9610-2ce43a4d6984
