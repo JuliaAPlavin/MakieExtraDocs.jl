@@ -41,7 +41,7 @@ md"""
 # ╔═╡ d092ff18-93aa-4c81-8af7-62613e074f51
 md"""
 Most plotting libraries, including Makie, tend to take different properties of the plot (xy coordinates, color, size, ...) as separate arrays.\
-This is convenient for tiny self-contained snippets, hard to argue with this simplicity:
+This is convenient for tiny self-contained snippets, hard to argue with the simplicity:
 """
 
 # ╔═╡ 4c171005-d3e5-4678-b454-901ccc824c1e
@@ -49,10 +49,11 @@ scatter(rand(100), rand(100))
 
 # ╔═╡ 51648500-f070-4dff-9b3f-a82d40335860
 md"""
-However, this can be suboptimal for anything even slightly more involved.\
-**Typically, one has a dataset – a collection of elements – and thinks of plotting in terms of these elements.** Like, "for `r ∈ data`, plot `abs(r.value)` along the x axis, `angle(r.value)` along the y axis, and color them by `r.age`.
+However, this approach can be suboptimal for anything even slightly more involved.\
+**It's very common that one has a dataset – a collection of elements – and thinks of plotting in terms of these elements.** Like, "for `r ∈ data`, plot `abs(r.value)` along the x axis, `angle(r.value)` along the y axis, and color them by `r.age`.
 
-Makie itself can take spatial coordinates as a single array: pass a Vector of Points specifying the coordinates. Other attributes still need to be passed separately. Also, it can be useful to know more about the underlying dataset even without involving other plotting attributes – see feature highlights below for neat examples.
+Makie itself partially supports this way of passing plotting arguments. It can take spatial coordinates as a single array: a Vector of Points.\
+Still, other attributes like color need to be passed separately. And even when only coordiates are involved (no other plotting attributes), it can be useful to know more about the underlying dataset than raw Points can provide. See feature highlights below for neat examples :)
 
 **`FPlot` is an object that encapsulates the whole plot definition.** Let's see how it works.
 """
@@ -174,7 +175,8 @@ md"""
 
 # ╔═╡ 2c72a873-c690-46aa-a0db-bf9be62d305a
 md"""
-`FPlot` objects can be manipulated in a natural way to obtain several plots with the same data and/or the same transformations:
+`FPlot` objects can be manipulated in a natural way to obtain several plots with the same data and/or the same transformations with some changes from one to another.\
+Here's what one should know about `FPlot` objects structure:
 - the dataset is available as `fplt.data`
 - positional arguments are available with indexing `fplt[1]`, `fplt[2]`, ...; for example, `FPlot(data, (@o _.a))[1] == @o _.a`
 - keyword arguments are available as properties; for example, `FPlot(data, color=(@o _.a)).color == @o _.a`
@@ -208,7 +210,7 @@ md"""
 # ╔═╡ 137c903b-d829-47d8-b793-fd4e053844d5
 md"""
 Keeping the full specification of the plot, both the underlying data and its transformations, makes it straightforward to create dynamic plots. \
-In contrast to regular Makie plotting, all components (x, y, color, ...) are updated simultaneously, getting rid of the potential for temporary length mismatch.
+In contrast to regular Makie plotting, all components (x, y, color, ...) are updated simultaneously, avoiding potential errors caused by temporary length mismatches.
 """
 
 # ╔═╡ 1cfb255f-9fcc-426f-bc57-bde22eedbf6c
@@ -235,6 +237,9 @@ One is the `DataCursor`: it highlights the axis values when moving the mouse, bo
 This is how `DataCursor` is enabled:
 """
 
+# ╔═╡ a3c56aa3-fb46-4f10-a7df-e96ebeee523e
+LocalResource("datacursor.mp4", "autoplay" => "true", "loop" => "true")
+
 # ╔═╡ cf092210-32b6-4ea8-9c16-6ea3104d3d77
 let
 	n = 100
@@ -251,17 +256,12 @@ let
 	axplot(lines, widgets=[dc])(fig[2,1], (@set fplt[2] = @o 1/_.b))
 
 	fig
-end
+end;
 
 # ╔═╡ 2636263c-bc75-48e1-905c-fad4d151edc0
 md"""
-When using GLMakie, hold `c` and move your mouse around the figure to activate the data cursor.
-
-The static rendered image above doesn't really demonstrate the widget. Here is a video recording of mouse interactions with this figure when it's shown in a GLMakie window:
+When using GLMakie or other interactive backends, hold `c` and move your mouse around the figure to activate the data cursor.
 """
-
-# ╔═╡ a3c56aa3-fb46-4f10-a7df-e96ebeee523e
-LocalResource("datacursor.mp4", "autoplay" => "true", "loop" => "true")
 
 # ╔═╡ 038630ce-f172-459d-b953-3222c9017c8b
 md"""
@@ -303,6 +303,9 @@ Ok, it highlights the selected area across axes... But how do we actually utiliz
 `mark_selected_data(data, rectsel)` returns a "marked" dataset: one can apply `is_selected(_)` to its elements to check whether they are within the target area. Here, we use it to color the points differently:
 """
 
+# ╔═╡ 8b79b5e9-61bd-40d5-9d78-118e8cbf7b0d
+LocalResource("rectsel2.mp4", "autoplay" => "true", "loop" => "true")
+
 # ╔═╡ 0c3da8d7-3632-4020-b565-5ef589b56359
 let
 	n = 100
@@ -329,7 +332,7 @@ Another useful function is `selected_data(data, rectsel)`: it returns the subset
 """
 
 # ╔═╡ 800091fe-f1ec-4069-bbea-dbcb2420f56f
-LocalResource("rectsel2.mp4", "autoplay" => "true", "loop" => "true")
+LocalResource("rectsel3.mp4", "autoplay" => "true", "loop" => "true")
 
 # ╔═╡ a2c1e9b6-bd46-4b0c-bb24-94573976ae60
 let
@@ -373,7 +376,11 @@ Imports
 TableOfContents(depth=4)
 
 # ╔═╡ 8681f282-2045-415d-a0ac-03143526e5c7
-
+html"""<style>
+video {
+	width: 100%;
+}
+</style>"""
 
 # ╔═╡ 0956d1bc-4256-4672-bedf-8483851a1ebd
 
@@ -624,9 +631,9 @@ version = "0.1.82"
 
 [[deps.Adapt]]
 deps = ["LinearAlgebra", "Requires"]
-git-tree-sha1 = "6a55b747d1812e699320963ffde36f1ebdda4099"
+git-tree-sha1 = "d80af0733c99ea80575f612813fa6aa71022d33a"
 uuid = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
-version = "4.0.4"
+version = "4.1.0"
 weakdeps = ["StaticArrays"]
 
     [deps.Adapt.extensions]
@@ -721,9 +728,9 @@ version = "0.4.0"
 
 [[deps.ColorSchemes]]
 deps = ["ColorTypes", "ColorVectorSpace", "Colors", "FixedPointNumbers", "PrecompileTools", "Random"]
-git-tree-sha1 = "b5278586822443594ff615963b0c09755771b3e0"
+git-tree-sha1 = "13951eb68769ad1cd460cdb2e64e5e95f1bf123d"
 uuid = "35d6a980-a343-548e-a6ea-1d62b119f2f4"
-version = "3.26.0"
+version = "3.27.0"
 
 [[deps.ColorTypes]]
 deps = ["FixedPointNumbers", "Random"]
@@ -1211,23 +1218,21 @@ weakdeps = ["Unitful"]
     InterpolationsUnitfulExt = "Unitful"
 
 [[deps.IntervalArithmetic]]
-deps = ["CRlibm_jll", "MacroTools", "RoundingEmulator"]
-git-tree-sha1 = "8e125d40cae3a9f4276cdfeb4fcdb1828888a4b3"
+deps = ["CRlibm_jll", "LinearAlgebra", "MacroTools", "RoundingEmulator"]
+git-tree-sha1 = "c59c57c36683aa17c563be6edaac888163f35285"
 uuid = "d1acc4aa-44c8-5952-acd4-ba5d80a2a253"
-version = "0.22.17"
+version = "0.22.18"
 
     [deps.IntervalArithmetic.extensions]
     IntervalArithmeticDiffRulesExt = "DiffRules"
     IntervalArithmeticForwardDiffExt = "ForwardDiff"
     IntervalArithmeticIntervalSetsExt = "IntervalSets"
-    IntervalArithmeticLinearAlgebraExt = "LinearAlgebra"
     IntervalArithmeticRecipesBaseExt = "RecipesBase"
 
     [deps.IntervalArithmetic.weakdeps]
     DiffRules = "b552c78f-8df3-52c6-915a-8e097449b14b"
     ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
     IntervalSets = "8197267c-284f-5f27-9208-e0e47529a953"
-    LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
     RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
 
 [[deps.IntervalSets]]
@@ -1461,7 +1466,7 @@ version = "0.8.9"
 
 [[deps.MakieExtra]]
 deps = ["AccessorsExtra", "DataManipulation", "DataPipes", "InverseFunctions", "Makie", "ObjectiveC", "PyFormattedStrings", "Reexport", "StructHelpers"]
-git-tree-sha1 = "37603adfc6d12ffd205a32d91be753d80bfbcb15"
+git-tree-sha1 = "ae941fe2dccb99aaafa422eac8f1d9b84dd108b9"
 uuid = "54e234d5-9986-40d8-815f-a5e42de435f6"
 version = "0.1.34"
 weakdeps = ["GLMakie", "Unitful"]
@@ -1893,9 +1898,9 @@ version = "0.1.1"
 
 [[deps.StaticArrays]]
 deps = ["LinearAlgebra", "PrecompileTools", "Random", "StaticArraysCore"]
-git-tree-sha1 = "eeafab08ae20c62c44c8399ccb9354a04b80db50"
+git-tree-sha1 = "777657803913ffc7e8cc20f0fd04b634f871af8f"
 uuid = "90137ffa-7385-5640-81b9-e52037218182"
-version = "1.9.7"
+version = "1.9.8"
 weakdeps = ["ChainRulesCore", "Statistics"]
 
     [deps.StaticArrays.extensions]
@@ -2298,17 +2303,18 @@ version = "1.4.1+1"
 # ╠═1cfb255f-9fcc-426f-bc57-bde22eedbf6c
 # ╟─46310a44-37fc-4193-b089-8049071b3331
 # ╟─70bbaf38-f1d9-4373-8b2c-fdc3f49bedd7
+# ╟─a3c56aa3-fb46-4f10-a7df-e96ebeee523e
 # ╠═cf092210-32b6-4ea8-9c16-6ea3104d3d77
 # ╟─2636263c-bc75-48e1-905c-fad4d151edc0
-# ╟─a3c56aa3-fb46-4f10-a7df-e96ebeee523e
 # ╟─038630ce-f172-459d-b953-3222c9017c8b
 # ╟─73b2f789-22ad-40d1-a360-d2e294908276
 # ╟─72c35d8e-516d-4925-b250-2e8a496b9540
 # ╠═13a47f17-ca59-42c0-8221-97a376c7647a
 # ╟─225b5175-bda1-40b2-ae90-7f8a3a83a27f
+# ╟─8b79b5e9-61bd-40d5-9d78-118e8cbf7b0d
 # ╠═0c3da8d7-3632-4020-b565-5ef589b56359
 # ╟─addc827a-9cc2-4f8d-b0b8-4c5cc594db53
-# ╠═800091fe-f1ec-4069-bbea-dbcb2420f56f
+# ╟─800091fe-f1ec-4069-bbea-dbcb2420f56f
 # ╠═a2c1e9b6-bd46-4b0c-bb24-94573976ae60
 # ╟─45bbf2d4-729f-487d-9b21-07f6b738ec2c
 # ╟─d60114b3-59d6-4187-a942-b299ea56e6fd
