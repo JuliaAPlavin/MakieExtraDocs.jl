@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.46
+# v0.20.1
 
 using Markdown
 using InteractiveUtils
@@ -110,6 +110,16 @@ let
 		t[] = x
 	end
 end
+
+# ╔═╡ 79365a2f-8ac4-4f68-929e-a1e6411e01e3
+md"""
+# `FPlot`: composable plotting specification
+"""
+
+# ╔═╡ 80e4fe31-2e8c-4a86-be58-b9da89c83515
+md"""
+`FPlot` is a major and relatively self-contained part of `MakieExtra` that is documented in a separate notebook. [Go to `FPlot` docs](https://juliaaplavin.github.io/MakieExtraDocs.jl/notebooks/examples.html).
+"""
 
 # ╔═╡ c6504e8d-7ef5-42a0-a978-dfedce9626d7
 md"""
@@ -2463,6 +2473,8 @@ version = "1.4.1+1"
 # ╠═9f008eee-6986-4ae4-9945-d854f75b7ed1
 # ╟─2ca62b2e-0947-43cb-81d5-839a85e201c4
 # ╟─9ad8a875-6a7d-453b-a917-c054d941490f
+# ╟─79365a2f-8ac4-4f68-929e-a1e6411e01e3
+# ╟─80e4fe31-2e8c-4a86-be58-b9da89c83515
 # ╟─c6504e8d-7ef5-42a0-a978-dfedce9626d7
 # ╟─d7bc9e8c-a208-47e5-bb06-0faa1a9c2463
 # ╟─dc93b904-81df-4a68-8936-938a9b095e5b
