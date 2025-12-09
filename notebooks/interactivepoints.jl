@@ -25,14 +25,23 @@ using IntervalSets
 # ╔═╡ 039fa5d2-d86b-4359-b9eb-723f511e53d2
 using RectiGrids, AxisKeysExtra
 
+# ╔═╡ c1d2d749-c4d8-4679-930d-75d3cc461d50
+using PlutoUI
+
 # ╔═╡ 69f4ba67-010c-4e0c-9996-754e5ba34715
 md"""
-This notebook highlights the `InteractivePoints()` widget in `MakieExtra.jl`. This widget makes it easy to interactively modify points plotted, and run arbitrary calculations with those points in real time. This notebook assumes some basic familiarity with `FPlot`, you may want to skim through [`FPlot` docs](https://juliaaplavin.github.io/MakieExtraDocs.jl/notebooks/fplot.html) first.
+# Interactive Points Widget
+
+This notebook demonstrates the `InteractivePoints` widget from `MakieExtra.jl`. It enables real-time manipulation of plotted points — move, add, or remove them with your mouse — while automatically updating any derived calculations.
+
+> **Prerequisite:** This notebook assumes basic familiarity with `FPlot`. See the [`FPlot` documentation](https://juliaaplavin.github.io/MakieExtraDocs.jl/notebooks/fplot.html) for an introduction.
 """
 
 # ╔═╡ 3cd8e8ad-1df7-4ac2-b716-91f40b23240f
 md"""
-Start with a basic static plot: show a dataset (uses FPlot for convenience and to get automatic axis labels) plus some statistics on it - here just the average along the vertical axis.
+## Static Plot Baseline
+
+First, let's create a basic static plot: a dataset visualized with `FPlot` (which provides automatic axis labels and overall convenience), along with a simple statistic — the mean of the y-values.
 """
 
 # ╔═╡ 1e51aea7-0876-4859-bce4-6c3a4af15fdf
@@ -47,11 +56,17 @@ end
 
 # ╔═╡ 255093ca-49c0-4c1a-b5ef-209bb75f7a97
 md"""
-Turn this into an interactive plot where one can manipulate points with the mouse – move existing points, remove them, or add more. Only a few changes – compare how similar this code is to the previous figure:
-- turn data into an Observable
-- add @lift in a few places
-- add the InteractivePoints widget
+## Making It Interactive
+
+Now let's make the plot interactive! With just a few modifications, you can manipulate points directly with the mouse — move, delete, or add new ones. Compare this code to the static version above, only a few updates:
+
+1. Wrap `data` in an `Observable`
+2. Use `@lift` to reactively update derived values
+3. Attach the `InteractivePoints` widget
 """
+
+# ╔═╡ c50fb9f2-5d20-4eb7-9793-5568685acf0b
+LocalResource("interactivepoints1.mp4", "autoplay" => "true", "loop" => "true")
 
 # ╔═╡ 8936145b-0dd0-4a09-9c37-b96bf005263a
 let
@@ -60,17 +75,24 @@ let
 	fig,ax,plt = axplot(scatter; widgets=[InteractivePoints(data)])(fplt; label="Points")
 	hlines!((@lift mean(last, $data)), label="Average")
 	axislegend()
-	fig |> display
-end
+	fig #|> display  # uncomment for interactivity
+end;
 
 # ╔═╡ 2266537e-6973-4834-a61e-dc49966a6f22
 md"""
-You can do anything with the data, as long as the Observables are passed correctly. The `@lift` macro is very convenient for this.
-For example, create a continous function by linear interpolation of points:
+## Custom Computations: Interpolation Example
+
+You can perform arbitrary computations on the interactive data — just wire up the `Observable`s correctly. The `@lift` macro makes this straightforward.
+
+Here, we build a continuous function via linear interpolation of the user-controlled points:
 """
+
+# ╔═╡ b4fd065e-f280-4b13-ae3e-09d9f709399e
+LocalResource("interactivepoints2.mp4", "autoplay" => "true", "loop" => "true")
 
 # ╔═╡ 2e6d3292-abba-4233-ab60-cb0cad27c0e9
 let
+	# set up calculations first – nothing specific to InteractivePoints here:
 	data = Observable([(0.2, 1.), (0.5, 0.5)])
 	func = @lift @p let
 		$data
@@ -78,21 +100,30 @@ let
 		linear_interpolation(first.(__), last.(__), extrapolation_bc=Linear())
 	end
 
+	# now create and fill the figure:
 	fig = Figure()
+	
 	axplot(scatter; widgets=[InteractivePoints(data)])(
 		fig[1,1], (@lift FPlot($data, first, last)), label="Points")
 	lines!((@lift x->$func(x)); label="Linear", yautolimits=false)
 	axislegend()
-	display(fig)
-end
+	
+	fig #|> display  # uncomment for interactivity
+end;
 
 # ╔═╡ b45470a6-74bd-407f-94d7-535941d074ac
 md"""
-And finally, a neat example demonstrating multiple aspects `InteractivePoints`.
-- multiple axes tied to the the same data: one has Re(z) and Im(z), 2nd has |z| and `pow`
-- movements in either axis are directly reflected in the `data`, and automatically propagate to keep everything consistent
-- 3d plot of f(z) = Σᵣ 1/(z - r.z)^r.pow is calculated and plotted
+## Multiple Axes
+
+This example showcases several powerful capabilities of `InteractivePoints`:
+
+- **Multiple coordinated axes:** The same data is shown in two different coordinate systems — `(Re(z), Im(z))` and `(|z|, pow)`
+- **Multidirectional updates:** Dragging points in either axis modifies the underlying data and automatically propagates changes everywhere
+- **Live 3D visualization:** The complex function ``f(z) = \sum_{r\in data} \frac{1}{(z - r.z)^{r.pow}}`` is computed and displayed as a surface plot
 """
+
+# ╔═╡ a652a6aa-fd31-463d-8a1c-4d3ce08c52ab
+LocalResource("interactivepoints3.mp4", "autoplay" => "true", "loop" => "true")
 
 # ╔═╡ 53e90e39-7563-4719-a815-442278ad3ec2
 let
@@ -134,8 +165,28 @@ let
 			axis=(;zlabel="|f(z)|", type=Axis3, viewmode=:free, height=500, limits=(nothing, nothing, 0..20)))
 
 	resize_to_layout!()
-	display(fig)
-end
+	fig #|> display  # uncomment for interactivity
+end;
+
+# ╔═╡ c44ca404-1c73-43b7-9cf7-a55410923efd
+
+
+# ╔═╡ 153b3cbb-4265-4297-b15a-6f0fb8be59d5
+
+
+# ╔═╡ e1ada3c1-f76a-4827-a12d-dec7055538bc
+
+
+# ╔═╡ 54eb09ef-ae63-405f-823d-300698fa3b36
+
+
+# ╔═╡ a2b438fd-428f-43dd-a9e0-d550c84a7107
+
+
+# ╔═╡ 85ea5db4-feb4-4679-af88-9cee83aaa4a6
+md"""
+Import all the packages used in this notebook:
+"""
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -147,6 +198,7 @@ GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
 Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
 IntervalSets = "8197267c-284f-5f27-9208-e0e47529a953"
 MakieExtra = "54e234d5-9986-40d8-815f-a5e42de435f6"
+PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 RectiGrids = "8ac6971d-971d-971d-971d-971d5ab1a71a"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
@@ -158,6 +210,7 @@ GLMakie = "~0.11.11"
 Interpolations = "~0.15.1"
 IntervalSets = "~0.7.13"
 MakieExtra = "~0.1.68"
+PlutoUI = "~0.7.75"
 RectiGrids = "~0.1.19"
 """
 
@@ -167,7 +220,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.10.10"
 manifest_format = "2.0"
-project_hash = "2d93661987e35b1e1702cd270eab5c816cbc3797"
+project_hash = "ee25d2535167846a0f6a2392674226fba82a168e"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -179,6 +232,12 @@ weakdeps = ["ChainRulesCore", "Test"]
     [deps.AbstractFFTs.extensions]
     AbstractFFTsChainRulesCoreExt = "ChainRulesCore"
     AbstractFFTsTestExt = "Test"
+
+[[deps.AbstractPlutoDingetjes]]
+deps = ["Pkg"]
+git-tree-sha1 = "6e1d2a35f2f90a4bc7c2ed98079b2ba09c35b83a"
+uuid = "6e696c72-6542-2067-7265-42206c756150"
+version = "1.3.2"
 
 [[deps.AbstractTrees]]
 git-tree-sha1 = "2d9c9a55f9c93e8887ad391fbae72f8ef55e1177"
@@ -819,6 +878,24 @@ git-tree-sha1 = "68c173f4f449de5b438ee67ed0c9c748dc31a2ec"
 uuid = "34004b35-14d8-5ef3-9330-4cdb6864b03a"
 version = "0.3.28"
 
+[[deps.Hyperscript]]
+deps = ["Test"]
+git-tree-sha1 = "179267cfa5e712760cd43dcae385d7ea90cc25a4"
+uuid = "47d2ed2b-36de-50cf-bf87-49c2cf4b8b91"
+version = "0.0.5"
+
+[[deps.HypertextLiteral]]
+deps = ["Tricks"]
+git-tree-sha1 = "7134810b1afce04bbc1045ca1985fbe81ce17653"
+uuid = "ac1192a8-f4b3-4bfe-ba22-af5b92cd3ab2"
+version = "0.9.5"
+
+[[deps.IOCapture]]
+deps = ["Logging", "Random"]
+git-tree-sha1 = "0ee181ec08df7d7c911901ea38baf16f755114dc"
+uuid = "b5f81e59-6552-4d32-b1f0-c071b021bf89"
+version = "1.0.0"
+
 [[deps.ImageAxes]]
 deps = ["AxisArrays", "ImageBase", "ImageCore", "Reexport", "SimpleTraits"]
 git-tree-sha1 = "e12629406c6c4442539436581041d372d69c55ba"
@@ -1126,6 +1203,11 @@ version = "0.3.29"
 [[deps.Logging]]
 uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
 
+[[deps.MIMEs]]
+git-tree-sha1 = "c64d943587f7187e751162b3b84445bbbd79f691"
+uuid = "6c6e2e6c-3030-632d-7369-2d6c69616d65"
+version = "1.1.0"
+
 [[deps.MKL_jll]]
 deps = ["Artifacts", "IntelOpenMP_jll", "JLLWrappers", "LazyArtifacts", "Libdl", "oneTBB_jll"]
 git-tree-sha1 = "282cadc186e7b2ae0eeadbd7a4dffed4196ae2aa"
@@ -1387,6 +1469,12 @@ deps = ["ColorSchemes", "Colors", "Dates", "PrecompileTools", "Printf", "Random"
 git-tree-sha1 = "26ca162858917496748aad52bb5d3be4d26a228a"
 uuid = "995b91a9-d308-5afd-9ec6-746e21dbc043"
 version = "1.4.4"
+
+[[deps.PlutoUI]]
+deps = ["AbstractPlutoDingetjes", "Base64", "ColorTypes", "Dates", "Downloads", "FixedPointNumbers", "Hyperscript", "HypertextLiteral", "IOCapture", "InteractiveUtils", "JSON", "Logging", "MIMEs", "Markdown", "Random", "Reexport", "URIs", "UUIDs"]
+git-tree-sha1 = "db8a06ef983af758d285665a0398703eb5bc1d66"
+uuid = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+version = "0.7.75"
 
 [[deps.PolygonOps]]
 git-tree-sha1 = "77b3d3605fc1cd0b42d95eba87dfcd2bf67d5ff6"
@@ -1745,10 +1833,20 @@ git-tree-sha1 = "0c45878dcfdcfa8480052b6ab162cdd138781742"
 uuid = "3bb67fe8-82b1-5028-8e26-92a6c54297fa"
 version = "0.11.3"
 
+[[deps.Tricks]]
+git-tree-sha1 = "311349fd1c93a31f783f977a71e8b062a57d4101"
+uuid = "410a4b4d-49e4-4fbc-ab6d-cb71b17b3775"
+version = "0.1.13"
+
 [[deps.TriplotBase]]
 git-tree-sha1 = "4d4ed7f294cda19382ff7de4c137d24d16adc89b"
 uuid = "981d1d27-644d-49a2-9326-4793e63143c3"
 version = "0.1.0"
+
+[[deps.URIs]]
+git-tree-sha1 = "bef26fb046d031353ef97a82e3fdb6afe7f21b1a"
+uuid = "5c2747f8-b7ea-4ff2-ba2e-563bfd36b1d4"
+version = "1.6.1"
 
 [[deps.UUIDs]]
 deps = ["Random", "SHA"]
@@ -2006,6 +2104,24 @@ version = "1.13.0+0"
 """
 
 # ╔═╡ Cell order:
+# ╟─69f4ba67-010c-4e0c-9996-754e5ba34715
+# ╟─3cd8e8ad-1df7-4ac2-b716-91f40b23240f
+# ╠═1e51aea7-0876-4859-bce4-6c3a4af15fdf
+# ╟─255093ca-49c0-4c1a-b5ef-209bb75f7a97
+# ╟─c50fb9f2-5d20-4eb7-9793-5568685acf0b
+# ╠═8936145b-0dd0-4a09-9c37-b96bf005263a
+# ╟─2266537e-6973-4834-a61e-dc49966a6f22
+# ╟─b4fd065e-f280-4b13-ae3e-09d9f709399e
+# ╠═2e6d3292-abba-4233-ab60-cb0cad27c0e9
+# ╟─b45470a6-74bd-407f-94d7-535941d074ac
+# ╟─a652a6aa-fd31-463d-8a1c-4d3ce08c52ab
+# ╠═53e90e39-7563-4719-a815-442278ad3ec2
+# ╟─c44ca404-1c73-43b7-9cf7-a55410923efd
+# ╟─153b3cbb-4265-4297-b15a-6f0fb8be59d5
+# ╟─e1ada3c1-f76a-4827-a12d-dec7055538bc
+# ╟─54eb09ef-ae63-405f-823d-300698fa3b36
+# ╟─a2b438fd-428f-43dd-a9e0-d550c84a7107
+# ╟─85ea5db4-feb4-4679-af88-9cee83aaa4a6
 # ╠═a289acc0-d37d-11f0-0ebe-45ef3526e758
 # ╠═6bcd4451-6263-4038-a7b4-718b5e26d468
 # ╠═5795fa52-6eb2-443b-a92b-fcaccc6f12f1
@@ -2013,14 +2129,6 @@ version = "1.13.0+0"
 # ╠═77725731-d091-4d17-a5af-c1f8d41cf53d
 # ╠═3defaaab-e475-47f2-bd89-07ae0b0c3e84
 # ╠═039fa5d2-d86b-4359-b9eb-723f511e53d2
-# ╠═69f4ba67-010c-4e0c-9996-754e5ba34715
-# ╠═3cd8e8ad-1df7-4ac2-b716-91f40b23240f
-# ╠═1e51aea7-0876-4859-bce4-6c3a4af15fdf
-# ╠═255093ca-49c0-4c1a-b5ef-209bb75f7a97
-# ╠═8936145b-0dd0-4a09-9c37-b96bf005263a
-# ╠═2266537e-6973-4834-a61e-dc49966a6f22
-# ╠═2e6d3292-abba-4233-ab60-cb0cad27c0e9
-# ╠═b45470a6-74bd-407f-94d7-535941d074ac
-# ╠═53e90e39-7563-4719-a815-442278ad3ec2
+# ╠═c1d2d749-c4d8-4679-930d-75d3cc461d50
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
